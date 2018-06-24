@@ -1,0 +1,27 @@
+﻿@model WebCalculator.Models.CalculateViewModel
+
+<h3>Type your calculation expression.</h3>
+
+<div>
+    <form asp-controller="Home" asp-action="Calculate" method="post">
+        <label for="input">Calculation Expression:</label>
+        @if (Model.Calculated)
+        {
+            <input type="text" name="expression" id="expression" placeholder="(5+6)" value="@Html.DisplayFor(model => model.Expression)">
+        }
+        else
+        {
+            <input type="text" name="expression" id="expression" placeholder="(5+6)">
+        }
+        <button type="submit">Calculate</button>
+    </form>
+
+    @if (Model.Calculated)
+    {
+        <div>
+            <hr />
+            <label for="input">Calculated:</label>
+            <p>@Html.DisplayFor(model => model.Result)</p>
+        </div>
+    }
+</div>

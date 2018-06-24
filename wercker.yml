@@ -1,0 +1,63 @@
+box: microsoft/dotnet:2.1-sdk
+no-response-timeout: 10
+build:
+  steps:    
+    - script:
+        name: restore
+        code: |
+          dotnet restore ./WebCalculator/
+    - script:
+        name: build
+        code: |
+          dotnet build ./WebCalculator/
+    - script:
+        name: publish
+        code: |
+          dotnet publish ./WebCalculator/ -o publish
+deploy:
+  box: microsoft/dotnet:2.1-aspnetcore-runtime
+  steps:
+    - script:
+        name: chmod
+        code: |
+          chmod +x ./docker_entrypoint.sh
+    - internal/docker-push:
+        working-dir: $WERCKER_ROOT
+        tag: $WERCKER_GIT_COMMIT
+        ports: "80"
+        username: _json_key
+        password: $GCP_KEY_JSON
+        repository: $GCR_TAG
+        registry: $GCR_HOST
+        entrypoint: ./docker_entrypoint.sh
+deploy-to-kubernetes:
+  box: microsoft/dotnet:2.1-aspnetcore-runtime
+    steps:
+
+    # https://github.com/wercker/step-bash-template
+    # This Wercker step will look for files in our repo with a .template extension.
+    # It will expand any environment variables in those files, then remove the
+    # template extension.
+    - bash-template
+
+    # The step above should leave us with a Kubernetes service and deployment yml files.
+    # We'll create a directory to move them to.
+    - script:
+        name: Prepare Kubernetes files
+        code: |
+          mkdir $WERCKER_OUTPUT_DIR/kubernetes
+          mv kubernetes_*.yml $WERCKER_OUTPUT_DIR/kubernetes
+    # Since we're using GKE, we'll use a fork of the kubectl step that supports
+    # GKE service account authentication. We need to pass some GKE specific configuration
+    # to ensure we can authenticate, then point kubectl at the directory containing our
+    # Kubernetes configuration.
+
+    # `apply` is a good command to use here, as it'll create Kubernetes entities if they are missing.
+    - riceo/kubectl:
+        name: deploy to kubernetes
+        server: $KUBERNETES_MASTER
+        gcloud-key-json: $GCP_KEY_JSON
+        gke-cluster-name: $GKE_CLUSTER_NAME
+        gke-cluster-zone: $GKE_CLUSTER_ZONE
+        gke-cluster-project: $GKE_CLUSTER_PROJECT
+        command: apply -f $WERCKER_OUTPUT_DIR/kubernetes/
