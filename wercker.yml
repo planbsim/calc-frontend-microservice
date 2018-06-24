@@ -31,6 +31,7 @@ deploy:
         registry: $GCR_HOST
         entrypoint: ./docker_entrypoint.sh
 deploy-to-kubernetes:
+    box: python:2.7
     steps:
 
     # https://github.com/wercker/step-bash-template
