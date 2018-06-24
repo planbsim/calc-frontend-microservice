@@ -31,7 +31,6 @@ deploy:
         registry: $GCR_HOST
         entrypoint: ./docker_entrypoint.sh
 deploy-to-kubernetes:
-    box: microsoft/dotnet:2.1-aspnetcore-runtime
     steps:
 
     # https://github.com/wercker/step-bash-template
